@@ -76,7 +76,8 @@ var div = d3.select('body').append("div");
   var compute_color = null;
   var changing_text = null;
   var missing_names = null;
-  var provinces_names = []
+  var provinces_names = [];
+  var last_id = 0; 
   provinces_names[0] = "";
   var div = d3.select("body").append("div")   
   .attr("class", "tooltip")               
@@ -88,7 +89,7 @@ var div = d3.select('body').append("div");
   .style("color","#9ebcda");
   changing_text =  d3.select("div.tooltip").append("p")
   .attr("class", "changing")
-  .text("Hover over a province");
+  .text("Click on a province");
   function count_number(leaves) {
       return leaves.length
   }
@@ -175,6 +176,13 @@ var div = d3.select('body').append("div");
     }
     result = result.replace(/, $/, ".");
     return result;
+  }
+  function fill_map(){
+    provinces.attr("fill", function(d,i){
+                  var t = linear(values[d.properties.id]);
+                  var color_single = compute_color(t);
+                  return color_single;
+                  })
   }       
   function display_title(){
     svg.append("text")
@@ -468,7 +476,8 @@ var div = d3.select('body').append("div");
      .transition().duration(2000).ease('linear')
      .attr("opacity", 0)
      .remove();
-
+  d3.selectAll('text.name')
+     .remove();
   values = get_province_count(all_data);
   provinces.transition().duration(2000).ease('linear')
            .attr("fill", function(d,i){
@@ -478,25 +487,24 @@ var div = d3.select('body').append("div");
             });
   d3.select("div.tooltip").transition().duration(2000).ease("linear")
     .style("opacity", 1);
+
   provinces
-     .on("mouseover",function(d,i){
+     .on("click",function(d,i){
+              fill_map();
               d3.select(this)
-                  .attr("fill","yellow");
-            changing_text = changing_text
-                              .text(provinces_names[d.properties.id] +", " +  values[d.properties.id] + " kids are missing:");
-            missing_names = d3.select("div.tooltip").append("p").attr("class", "missing_list")
-                              .text(find_missing_list(d.properties.id));
+                .attr("fill","yellow");
+              changing_text = changing_text
+                            .text(provinces_names[d.properties.id] +", " +  values[d.properties.id] + " kids are missing:");
+              if(missing_names){
+                missing_names.remove();
+              }                  
+              missing_names = d3.select("div.tooltip")
+                                .append("p")
+                                .attr("class", "missing_list")
+                                .text(find_missing_list(d.properties.id));
           })
      .on("mouseout",function(d,i){
-              d3.select(this)
-                  .attr("fill",function(d,i){
-                    var t = linear(values[d.properties.id]);
-                    var color_single = compute_color(t);
-                    return color_single;
-                });
-            if(missing_names){
-              missing_names.remove();
-            }
+
           });
         
             
