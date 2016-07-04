@@ -39,6 +39,7 @@ var div = d3.select('body').append("div");
   var width  = 1000;
   var height = 1000;
   
+  //create public variables for data exchange
   var svg = d3.select("body").append("svg")
       .attr("width", width)
       .attr("height", height)
@@ -90,6 +91,9 @@ var div = d3.select('body').append("div");
   changing_text =  d3.select("div.tooltip").append("p")
   .attr("class", "changing")
   .text("Click on a province");
+
+  //following is some utility used in the main process
+  //the name of the function indicate what the function can accomplish  
   function count_number(leaves) {
       return leaves.length
   }
@@ -183,7 +187,9 @@ var div = d3.select('body').append("div");
                   var color_single = compute_color(t);
                   return color_single;
                   })
-  }       
+  } 
+
+  //following functions manipulate elements on the screen      
   function display_title(){
     svg.append("text")
        .text("Kids Kidnapping In China")
@@ -250,6 +256,8 @@ var div = d3.select('body').append("div");
  function delete_date(){
    d3.select(".month_date").remove();
  }
+
+ //this is the workhorse of slowly show red dots on the screen.
  function slowly_show_case(){
   for (var i = 0; i < slowly_data.length; i++) {
     x = find_position(slowly_data[i])[0];
@@ -377,6 +385,8 @@ var div = d3.select('body').append("div");
          step_after_slowly_draw();
     });
  }
+
+ //this is the workhorse of show many red dots on the screen.
  function batch_show_case(){
   for (var i = 0; i < sampled_data.length; i++) {
     x = find_position(sampled_data[i])[0];
@@ -471,6 +481,8 @@ var div = d3.select('body').append("div");
          step_after_batch_draw();
     });
  }
+
+ //this function govern the process after all the red dots are shown
  function show_color_map(){
   d3.selectAll('circle')
      .transition().duration(2000).ease('linear')
@@ -510,6 +522,8 @@ var div = d3.select('body').append("div");
             
  }
 
+ //following functions control how the animation is flowing.
+
  function step_after_batch_draw(){
     show_color_map();
  }
@@ -530,6 +544,8 @@ var div = d3.select('body').append("div");
  function begin(){
     display_title();
  }
+
+ //this function preprocess the data for further use
  function prepare_data(){   
     current_date = all_data[0].lost_date;
     for (var i =0; i<all_data.length; i++){
@@ -571,6 +587,8 @@ var div = d3.select('body').append("div");
     }
     values.push(0);    
  }
+
+ //this function execute when all the data loading is completed
  function data_ready(error, data){
     if (error) throw error;
     map_data = data;
@@ -578,7 +596,7 @@ var div = d3.select('body').append("div");
     begin();
  }
 
-
+ //The program begin from here, two datasets are loaded before above funtion called 
  d3.queue()
    .defer(d3.json, "data/china.geojson")
    .defer(d3.csv, "data/simple_data.csv", function(data) {
