@@ -1,0 +1,588 @@
+<html>  
+  <head>  
+        <meta charset="utf-8">  
+        <title>China Kidnapping</title>
+  </head> 
+<style>
+  .ring {
+    fill: none;
+    stroke: #c7141a;
+  }
+  .dot {
+  fill: #c7141a;
+  }
+  div.tooltip {   
+  position: absolute;           
+  text-align: left;           
+  width: 350px;                               
+  padding: 2px;             
+  font-size: 10px;     
+  background: #FFFFE0;
+  border: 1px;      
+  border-radius: 8px;           
+  pointer-events: none;
+  left:900px;
+  top:50px;         
+  }  
+  p.changing {         
+  font-size: 20px;     
+  } 
+
+
+
+</style>
+<body>
+<script src="d3/d3.min.js"></script>
+<script src="d3/d3-queue.v3.min.js"></script>
+<script>
+var div = d3.select('body').append("div");
+  var width  = 1000;
+  var height = 1000;
+  
+  var svg = d3.select("body").append("svg")
+      .attr("width", width)
+      .attr("height", height)
+      .append("g")
+      .attr("transform", "translate(0,0)");
+  var provinces = [];
+  var all_data = [];
+  var passed_data = [];
+  var display_data = [];
+  var sampled_data = [];
+  var map_data = [];
+  var current_date = "";
+  var date_format_read = d3.time.format("%Y-%m");
+  var date_format_display = d3.time.format("%B %Y");
+  var slowly_number = 6;
+  var kidnapping_number_obj;
+  var date_obj;
+  var slowly_data = [];
+  var batch_data = [];
+  var provinces_centroids = [[0,0]];
+  var projection = d3.geo.mercator()
+        .center([107, 31])
+        .scale(750)
+          .translate([width/2, height/2]);
+
+  var path = d3.geo.path()
+          .projection(projection);
+  var slow_speed = 100;
+  var batch_speed = 200;
+  var sample_size = 200;
+  var acc_slow = 0.7;
+  var acc_batch = 0.7;
+  var values = [];
+  var linear = null;
+  var compute_color = null;
+  var changing_text = null;
+  var missing_names = null;
+  var provinces_names = []
+  provinces_names[0] = "";
+  var div = d3.select("body").append("div")   
+  .attr("class", "tooltip")               
+  .style("opacity", 0);
+
+  d3.select("div.tooltip").append("p")
+  .text("Kidnapping Number")
+  .style("font-size", "20px")
+  .style("color","#9ebcda");
+  changing_text =  d3.select("div.tooltip").append("p")
+  .attr("class", "changing")
+  .text("Hover over a province");
+  function count_number(leaves) {
+      return leaves.length
+  }
+  function get_province_count(leaves){
+      var counted_province = d3.nest()
+       .key(function(d) {
+          return d['province_id'];
+       })
+       .rollup(count_number)
+       .entries(leaves);
+      for(var i = 0; i < counted_province.length; i++){
+        var id = + (counted_province[i].key);
+        var value = counted_province[i].values;
+        values[id] =  +value;
+      }
+      return values;
+  }
+
+  function getRandomIntInclusive(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+  function pointInPolygon(point, vs) {
+    // ray-casting algorithm based on
+    // http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
+    var xi, xj, i, intersect,
+        x = point[0],
+        y = point[1],
+        inside = false;
+    for (var i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+      xi = vs[i][0],
+      yi = vs[i][1],
+      xj = vs[j][0],
+      yj = vs[j][1],
+      intersect = ((yi > y) != (yj > y))
+          && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  }
+  function randPoint(bounds) {
+    return [Math.floor(Math.random() * (bounds[1][0]-bounds[0][0])) + bounds[0][0], Math.floor(Math.random() * (bounds[1][1]-bounds[0][1])) + bounds[0][1]];
+  }
+  function find_position(datum){
+    var map_geo = map_data.features[datum.province_id-1].geometry;
+    var bounds = path.bounds(map_data.features[datum.province_id-1]);
+    if (map_geo.type == "Polygon"){
+      var coords = [];
+      for (var i = 0; i < map_geo.coordinates[0].length; i++){
+        coords.push(projection(map_geo.coordinates[0][i]));
+      }
+      for (var i = 0; i < 50; i++){
+        point = randPoint(bounds);
+        if(pointInPolygon(point, coords))
+          break;
+      }
+    return point;
+    }else if (map_geo.type == "MultiPolygon"){
+      var coords = [];
+      for (var i = 0; i < map_geo.coordinates.length; i++){
+        temp = [];
+        for (var j =0 ; j < map_geo.coordinates[i][0].length; j++){
+          temp.push(projection(map_geo.coordinates[i][0][j]));
+        }
+        coords.push(temp);        
+      }
+     for (var i = 0; i < 50; i++){
+        point = randPoint(bounds);
+        for (var j=0; j <coords.length; j++){
+          if(pointInPolygon(point, coords))
+          break;
+        }
+      }      
+     return point;
+    } else{
+        return randPoint(bounds);
+      }
+  }
+  function find_missing_list(province_id){
+    result = ""
+    for(var i =0 ; i<all_data.length;i++){
+      if(all_data[i].province_id == province_id){
+        result = result + all_data[i].name + ", "
+      }
+    }
+    result = result.replace(/, $/, ".");
+    return result;
+  }       
+  function display_title(){
+    svg.append("text")
+       .text("Kids Kidnapping In China")
+       .attr("x", 10)
+       .attr("y", 30)
+       .attr("font-family", "sans-serif")
+       .attr("font-size", "20px")
+       .attr("opacity", 0 ).transition().duration(1250)
+       .attr("opacity", 1 )
+       .each("end", step_after_title);
+  }
+  function display_kidnapping_number(){
+    svg.append("text")
+       .attr("class", "kidnapping_number")
+       .text(passed_data.length)
+       .attr("x", 500)
+       .attr("y", 90)
+       .attr("font-size", "40px")
+       .attr("opacity", 0 ).transition().delay(500).duration(500)
+       .attr("opacity", 1 )
+    svg.append("text")
+       .attr("class", "kidnapping_text")
+       .text("Kids Kidnapped")
+       .attr("x", 500)
+       .attr("y", 120)
+       .attr("font-size", "20px")
+       .attr("opacity", 0 ).transition().delay(500).duration(500)
+       .attr("opacity", 1 )
+  }
+ function display_date(date){
+    svg.append("text")
+       .attr("class", "month_date")
+       .text(date_format_display(date))
+       .attr("x", 10)
+       .attr("y", 90)
+       .attr("font-size", "30px")
+       .attr("opacity", 0 ).transition().delay(500).duration(500)
+       .attr("opacity", 1 )
+ }
+ function display_map(){
+    provinces = svg.selectAll("path")
+    .data( map_data.features )
+    .enter()
+    .append("path")
+    .attr("stroke","#99d8c9")   
+    .attr("fill", function(d,i){
+      return "white";
+    })
+    .attr("d", path );
+    provinces.attr("stroke-width",0).transition().delay(500).duration(1000)
+             .attr("stroke-width",2)
+             .each("end", function(d,i) {
+               if (i == map_data.features.length-1)
+                  step_after_draw_map();
+              });
+
+ }
+ function update_number(i){
+   d3.select(".kidnapping_number").text(i + " Kids Kidnapped");
+ }
+ function delete_number(){
+   d3.select(".kidnapping_number").remove();
+ }
+ function delete_date(){
+   d3.select(".month_date").remove();
+ }
+ function slowly_show_case(){
+  for (var i = 0; i < slowly_data.length; i++) {
+    x = find_position(slowly_data[i])[0];
+    y = find_position(slowly_data[i])[1];
+    slowly_data[i].draw_x = x;
+    slowly_data[i].draw_y = y; 
+    }
+  delete_number();
+  delete_date();
+  for (var i = 0; i < slowly_data.length; i++) {
+    svg.append("text")
+      .attr("class", "kidnapping")
+      .attr("opacity", 0);
+    }
+  d3.selectAll("text.kidnapping")
+    .data(slowly_data)
+    .attr("x", 500)
+    .attr("y", 90)
+    .attr("font-size", "40px")
+    .text(function(d,i){
+       return (i+1);
+     })
+    .transition().delay(function(d,i){
+                            return Math.pow(i, acc_slow)*slow_speed;})
+    .duration(10)
+    .attr("opacity", 1)
+    .transition().delay(function(d,i){
+                            return Math.pow(i+1, acc_slow)*slow_speed;})
+    .attr("opacity", function(d,i){
+      if (i == slowly_data.length-1){
+        return 1;
+      }else{
+        return 0;
+      }
+     });
+
+
+  for (var i = 0; i < slowly_data.length; i++) {
+    svg.append("circle")
+      .attr("class", "kidnapping_slow")
+      .attr("opacity", 0);
+  }
+
+  svg.selectAll("circle.kidnapping_slow")
+     .data(slowly_data)
+     .attr("cx", function(d){
+      return d.draw_x;
+     })
+     .attr("cy", function(d){
+      return d.draw_y;
+     })
+     .attr("fill", "red")
+     .attr("r", 200)
+     .transition().delay(function(d,i){
+                            return Math.pow(i, acc_slow)*slow_speed;})
+     .duration(1000)
+     .attr("opacity", 1)
+     .attr("r", 8)
+     .transition()
+     .duration(500)
+     .attr("opacity", 0.1);
+
+
+  for (var i = 0; i < slowly_data.length; i++) {
+    svg.append("text")
+      .attr("class", "date_lost")
+      .attr("opacity", 0);
+    }
+
+  d3.selectAll("text.date_lost")
+    .data(slowly_data)
+    .attr("x", 10)
+    .attr("y", 90)
+    .attr("font-size", "30px")
+    .text(function(d,i){
+      return date_format_display(d.lost_date);})
+    .transition().delay(function(d,i){
+                            return Math.pow(i, acc_slow)*slow_speed;})
+    .duration(10)
+    .attr("opacity", 1)
+    .transition().delay(function(d,i){
+                            return Math.pow(i+1, acc_slow)*slow_speed;})
+    .attr("opacity", function(d,i){
+      if (i == slowly_data.length-1){
+        return 1;
+      }else{
+        return 0;
+      }
+     });
+
+  for (var i = 0; i < slowly_data.length; i++) {
+    svg.append("text")
+      .attr("class", "name")
+      .attr("opacity", 0);
+    }
+
+  d3.selectAll("text.name")
+    .data(slowly_data)
+    .attr("x", function(d){
+      return d.draw_x - 50;
+     })
+    .attr("y", function(d){
+      return d.draw_y - 12;
+     })
+    .attr("font-size", "20px")
+    .text(function(d,i){
+      if(d.age == 0){
+        return d.name + ", kidnapped below 1";
+      }
+      else{
+        return d.name + ", kidnapped at age of "+ d.age;
+      }
+      })
+    .transition().delay(function(d,i){
+                            return Math.pow(i, acc_slow)*slow_speed;})
+    .duration(2000)
+    .attr("opacity", 1)
+    .transition().delay(function(d,i){
+                            return Math.pow(i+1, acc_slow)*slow_speed;})
+    .attr("opacity", function(d,i){
+        return 0;
+     })
+    .each("end", function(d,i) {
+      if (i == slowly_data.length-1)
+         step_after_slowly_draw();
+    });
+ }
+ function batch_show_case(){
+  for (var i = 0; i < sampled_data.length; i++) {
+    x = find_position(sampled_data[i])[0];
+    y = find_position(sampled_data[i])[1];
+    sampled_data[i].draw_x = x;
+    sampled_data[i].draw_y = y; 
+    }
+    d3.selectAll("text.kidnapping").remove();
+    d3.selectAll("text.date_lost").remove();
+
+  for (var i = 0; i < sampled_data.length; i++) {
+    svg.append("text")
+      .attr("class", "kidnapping")
+      .attr("opacity", 0);
+    }
+  d3.selectAll("text.kidnapping")
+    .data(sampled_data)
+    .attr("x", 500)
+    .attr("y", 90)
+    .attr("font-size", "40px")
+    .text(function(d,i){
+       return d.acc_number;
+     })
+    .transition().delay(function(d,i){
+                            return Math.pow(i, acc_batch)*batch_speed;})
+    .duration(10)
+    .attr("opacity", 1)
+    .transition().delay(function(d,i){
+                            return Math.pow(i+1, acc_batch)*batch_speed;})
+    .attr("opacity", function(d,i){
+      if (i == sampled_data.length-1){
+        return 1;
+      }else{
+        return 0;
+      }
+     });
+
+  for (var i = 0; i < sampled_data.length; i++) {
+    svg.append("circle")
+      .attr("class", "kidnapping_batch")
+      .attr("opacity", 0);
+  }
+
+  svg.selectAll("circle.kidnapping_batch")
+     .data(sampled_data)
+     .attr("cx", function(d){
+      return d.draw_x;
+     })
+     .attr("cy", function(d){
+      return d.draw_y;
+     })
+     .attr("fill", "red")
+     .attr("r", 50)
+     .transition().delay(function(d,i){
+                            return Math.pow(i, acc_batch)*batch_speed;})
+     .duration(1000)
+     .attr("opacity", 1)
+     .attr("r", 8)
+     .transition()
+     .duration(500)
+     .attr("opacity", 0.1);
+
+
+  for (var i = 0; i < sampled_data.length; i++) {
+    svg.append("text")
+      .attr("class", "date_lost")
+      .attr("opacity", 0);
+    }
+
+  d3.selectAll("text.date_lost")
+    .data(sampled_data)
+    .attr("x", 10)
+    .attr("y", 90)
+    .attr("font-size", "30px")
+    .text(function(d,i){
+      return date_format_display(current_date) + ' - ' + date_format_display(d.lost_date);})
+    .transition().delay(function(d,i){
+                            return Math.pow(i, acc_batch)*batch_speed;})
+    .duration(10)
+    .attr("opacity", 1)
+    .transition().delay(function(d,i){
+                            return Math.pow(i+1, acc_batch)*batch_speed;})
+    .attr("opacity", function(d,i){
+      if (i == sampled_data.length-1){
+        return 1;
+      }else{
+        return 0;
+      }
+     })
+    .each("end", function(d,i) {
+      if (i == sampled_data.length-1)
+         step_after_batch_draw();
+    });
+ }
+ function show_color_map(){
+  d3.selectAll('circle')
+     .transition().duration(2000).ease('linear')
+     .attr("opacity", 0)
+     .remove();
+
+  values = get_province_count(all_data);
+  provinces.transition().duration(2000).ease('linear')
+           .attr("fill", function(d,i){
+                var t = linear(values[d.properties.id]);
+                var color_single = compute_color(t);
+                return color_single;
+            });
+  d3.select("div.tooltip").transition().duration(2000).ease("linear")
+    .style("opacity", 1);
+  provinces
+     .on("mouseover",function(d,i){
+              d3.select(this)
+                  .attr("fill","yellow");
+            changing_text = changing_text
+                              .text(provinces_names[d.properties.id] +", " +  values[d.properties.id] + " kids are missing:");
+            missing_names = d3.select("div.tooltip").append("p").attr("class", "missing_list")
+                              .text(find_missing_list(d.properties.id));
+          })
+     .on("mouseout",function(d,i){
+              d3.select(this)
+                  .attr("fill",function(d,i){
+                    var t = linear(values[d.properties.id]);
+                    var color_single = compute_color(t);
+                    return color_single;
+                });
+            if(missing_names){
+              missing_names.remove();
+            }
+          });
+        
+            
+ }
+
+ function step_after_batch_draw(){
+    show_color_map();
+ }
+
+  function step_after_slowly_draw(){
+    batch_show_case();
+ }
+
+ function step_after_draw_map(){
+    slowly_show_case();
+ }
+
+ function step_after_title(){
+    display_kidnapping_number();
+    display_date(current_date);
+    display_map();
+  }
+ function begin(){
+    display_title();
+ }
+ function prepare_data(){   
+    current_date = all_data[0].lost_date;
+    for (var i =0; i<all_data.length; i++){
+      provinces_names[all_data[i].province_id] = all_data[i].province;
+    }
+    provinces_names[34] = "Taiwan";
+    for (var i = 0; i < slowly_number; i++){
+      slowly_data.push(all_data[i]);
+    }
+    for (var i = slowly_number; i < all_data.length; i++){
+      batch_data.push(all_data[i]);
+    }
+    for(var i = 0; i < map_data.features.length; i++){
+      id = map_data.features[i].properties.id;
+      value = path.centroid(map_data.features[i]);
+      provinces_centroids[id] = value
+    }
+    sample_numbers = [];
+    for (var i = 0; i<sample_size; i++){
+      sample_numbers.push(getRandomIntInclusive(slowly_number, all_data.length-1));
+    } 
+    sample_numbers.sort(function(a, b){return a-b});
+    for (var i = 0; i<sample_size; i++){
+      temp = all_data[sample_numbers[i]];
+      temp['acc_number'] = sample_numbers[i] + 1;
+      sampled_data.push(temp);
+    }
+    values = get_province_count(all_data);
+    var max_value = d3.max(values);
+    var min_value = 0;
+    linear =d3.scale.linear()
+                       .domain([min_value, max_value])
+                        .range([0,1]);                
+    var a = d3.rgb(255,255,255);
+    var b = d3.rgb(255,0,0);
+    compute_color = d3.interpolate(a,b);
+    for(var i = 0; i < values.length; i++){
+        values[i] = 0;
+    }
+    values.push(0);    
+ }
+ function data_ready(error, data){
+    if (error) throw error;
+    map_data = data;
+    prepare_data();
+    begin();
+ }
+
+
+ d3.queue()
+   .defer(d3.json, "china.geojson")
+   .defer(d3.csv, "simple_data.csv", function(data) {
+                                      data.lost_date = date_format_read.parse(data.lost_date); 
+                                      data.age = +data.age;
+                                      data.province_id = +data.province_id;
+                                      all_data.push(data);})
+   .await(data_ready);
+ 
+
+
+</script>
+  
+</body>  
+</html>  
