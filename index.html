@@ -32,8 +32,8 @@
 
 </style>
 <body>
-<script src="d3/d3.min.js"></script>
-<script src="d3/d3-queue.v3.min.js"></script>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/d3-queue.v3.min.js"></script>
 <script>
 var div = d3.select('body').append("div");
   var width  = 1000;
@@ -66,9 +66,9 @@ var div = d3.select('body').append("div");
 
   var path = d3.geo.path()
           .projection(projection);
-  var slow_speed = 100;
+  var slow_speed = 4000;
   var batch_speed = 200;
-  var sample_size = 200;
+  var sample_size = 1000;
   var acc_slow = 0.7;
   var acc_batch = 0.7;
   var values = [];
@@ -572,8 +572,8 @@ var div = d3.select('body').append("div");
 
 
  d3.queue()
-   .defer(d3.json, "china.geojson")
-   .defer(d3.csv, "simple_data.csv", function(data) {
+   .defer(d3.json, "data/china.geojson")
+   .defer(d3.csv, "data/simple_data.csv", function(data) {
                                       data.lost_date = date_format_read.parse(data.lost_date); 
                                       data.age = +data.age;
                                       data.province_id = +data.province_id;
