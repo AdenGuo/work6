@@ -26,13 +26,13 @@ http://www.ft.com/cms/s/2/9704cbdc-8eaa-11e5-8be4-3506bf20cc2b.html#slide0
 # Feedback
 
 
-1. Karthik Rajasethupathy
+* Karthik Rajasethupathy
 
 
 Hey Yading, I really like this visualization. it definitely makes an impact and i feel like it tells a story with the way that starts with individual cases and sort of speeds up. some really minor things - when i hover on a province to try to read the names of the kids, if i scroll down, the names disappear. might be nice to make that list more permanent if, for instance, i click a province? also, you start off by showing the ages of the kids, but in the final view, there's no age data. would be informative to break down the number of kids kidnapped in each province by the age group (and show it, possibly as a table or bar chart, in the same area where the count/names are shown?). thanks for sharing, very nice!
 
 
-2. Lekhraj Sharma
+* Lekhraj Sharma
 
 
 Hi Yading, really nice visualization. Liked the way you build up visualization by animating bubbles into the map (some bubbles do seem to go out of map in initial animation). Also liked the hovering over info with list of names. Here are few things for you to think about:
@@ -65,13 +65,13 @@ Hi Yading, really nice visualization. Liked the way you build up visualization b
 -See if you can make visualization responsive. Currently visualization does not scale when browser window is resized.
 
 
-3. Amit Bissa
+* Amit Bissa
 
 
 By showing there names, you have done is captured every individual.....i liked that.
 
 
-4. ucaiado
+* ucaiado
 
 
 Wow.... your visualization is shocking (and sad). You have collected a very interesting and important dataset to explore, and I feel like that the way you chose to present the data is just right. Your visualization is beautiful. Congrats !
