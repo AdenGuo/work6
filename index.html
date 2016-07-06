@@ -61,6 +61,7 @@ var div = d3.select('body').append("div");
   var batch_data = [];
   var counted_age = [];
   var counted_year = [];
+  var counted_gender = [];
   var provinces_centroids = [[0,0]];
   var projection = d3.geo.mercator()
         .center([107, 31])
@@ -89,11 +90,11 @@ var div = d3.select('body').append("div");
   var hist_control = svg.append("g")
   .attr("transform", function(d, i) { return "translate(" + 10 + "," + 120 + ")"; });
   hist_control.append("rect")
-            .attr("width", 200)
+            .attr("width", 300)
             .attr("height",60)
             .attr("fill", "#e5f5f9");
   hist_control.append("text")
-            .attr("x",30)
+            .attr("x",50)
             .attr("y",15)
             .text("Hover over two buttons")
   var age_hist_g= hist_control.append("g")
@@ -108,7 +109,6 @@ var div = d3.select('body').append("div");
     .attr("y", 10)
     .attr("dy", ".35em")
     .text("AGE");    
-  hist_control.attr("fill-opacity", 0);
   var year_hist_g = hist_control.append("g")
     .attr("transform", function(d, i) { return "translate(" +100 + "," + 30 + ")"; });
   year_hist_button = year_hist_g.append("rect")
@@ -120,7 +120,23 @@ var div = d3.select('body').append("div");
     .attr("x", 5)
     .attr("y", 10)
     .attr("dy", ".35em")
-    .text("YEAR");         
+    .text("YEAR");
+  var gender_hist_g = hist_control.append("g")
+    .attr("transform", function(d, i) { return "translate(" +180 + "," + 30 + ")"; });
+  gender_hist_button = gender_hist_g.append("rect")
+            .attr("width", 75)
+            .attr("height",20)
+            .attr("fill", "#f0f0f0")
+
+  gender_hist_g.append("text")
+    .attr("x", 5)
+    .attr("y", 10)
+    .attr("dy", ".35em")
+    .text("GENDER");
+  hist_control.attr("fill-opacity", 1);
+  var age_hist_show = false;
+  var year_hist_show = false;
+  var gender_hist_show = false;             
 /*
   var hist_age_button = svg.append("rect")   
     .attr("class", "age_hist_button")               
@@ -192,6 +208,15 @@ var div = d3.select('body').append("div");
        .rollup(count_number)
        .entries(data);
     return counted_year;
+  }
+  function get_gender_count(data){
+    counted_gender = d3.nest()
+       .key(function(d) {
+          return d['gender'];
+       })
+       .rollup(count_number)
+       .entries(data);
+    return counted_gender;
   }
   function getRandomIntInclusive(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -437,6 +462,58 @@ var div = d3.select('body').append("div");
     .attr("x", function(d,i) { return i*(span+step)+step+10;})
     .attr("font-size", '15px')
     .attr("y", function(d) { return 0.65*height - 10 - y(d.values);})
+    .attr("text-anchor","middle")
+    .style("fill", 'black')
+    .style("opacity",1)
+    .text(function(d) {return d.values;});
+ }
+function draw_gender_hist(){
+  var max_value = d3.max(counted_gender,function(d){
+    return d.values;
+  });
+  var step = (width*0.4-(width/20))/counted_gender.length;
+  var span = step/5;
+  var y = d3.scale.linear()
+            .domain([0, max_value])
+            .range([0, height-600]);
+  
+  svg.selectAll('.gender_hist')
+      .data(counted_gender)
+      .enter()
+      .append('rect')
+      .attr("class", "gender_hist")
+      .style('fill', "steelblue")
+      .attr('x', function(d,i) { return i*(span+step)+200;})
+      .attr('y', function(d) { return 0.65*height-y(d.values);})
+      .attr('width', step)
+      .attr('height', 0)
+      .transition().duration(1000).ease("linear")
+      .attr('height', function(d) {return y(d.values); });
+
+  svg.selectAll("genders")
+    .data(counted_gender)
+    .enter()
+    .append("text")
+    .attr("class","gender_hist")
+    .attr("dy", ".32em")
+    .attr("x", function(d,i) { return i*(span+step)+step + 100;})
+    .attr("font-size", '30px')
+    .attr("y", function(d) { return 0.65*height + 10;})
+    .attr("text-anchor","middle")
+    .style("fill", 'black')
+    .style("opacity",1)
+    .text(function(d, i) {
+                         return d.key;
+                        });
+  svg.selectAll("values")
+    .data(counted_gender)
+    .enter()
+    .append("text")
+    .attr("class","gender_hist")
+    .attr("dy", ".32em")
+    .attr("x", function(d,i) { return i*(span+step)+step + 100;})
+    .attr("font-size", '30px')
+    .attr("y", function(d) { return 0.65*height - 16 - y(d.values);})
     .attr("text-anchor","middle")
     .style("fill", 'black')
     .style("opacity",1)
@@ -711,7 +788,17 @@ var div = d3.select('body').append("div");
                      d3.selectAll(".age_hist").remove();
                      provinces.attr("opacity", 1);
                      d3.select("div.tooltip").style("opacity", 1);
-             });                         
+             });   
+  gender_hist_g.on("mouseover", function(d,i){
+                      draw_gender_hist();
+                      provinces.attr("opacity", 0.1);
+                      d3.select("div.tooltip").style("opacity", 0);
+                 })
+             .on("mouseout", function(d,i){
+                     d3.selectAll(".gender_hist").remove();
+                     provinces.attr("opacity", 1);
+                     d3.select("div.tooltip").style("opacity", 1);
+             });                        
   provinces
      .on("click",function(d,i){
               fill_map();
@@ -765,6 +852,7 @@ var div = d3.select('body').append("div");
     }
     counted_age = get_age_count(all_data);
     counted_year = get_year_count(all_data);
+    counted_gender = get_gender_count(all_data);
     provinces_names[34] = "Taiwan";
     for (var i = 0; i < slowly_number; i++){
       slowly_data.push(all_data[i]);
