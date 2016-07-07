@@ -1,7 +1,7 @@
 <html>  
   <head>  
         <meta charset="utf-8">  
-        <title>China Kidnapping</title>
+        <title>China's Missing Childern</title>
   </head> 
 <style>
   .ring {
@@ -40,6 +40,7 @@ var div = d3.select('body').append("div");
   var height = 1000;
   
   //create public variables for data exchange
+  var intro_text = "In China, massive number childern is missing. According to various sources, 10000 to 70000 childern are kidnapped in a single year. In US, this number is 100-200. Most childern kidnapped will never see their parents. Unlike in US, the main purpose of kidnapping is not demanding ransom or sexual offences. The childern are for sale. The crime of kidnapping childern is highly organized in China. I have collect information from www.baibeihuijia.com, a website for heartbreaking parents looking for their missing childern. The following graphs and charts are about them, about this big tragedy happending in China."
   var svg = d3.select("body").append("svg")
       .attr("width", width)
       .attr("height", height)
@@ -67,7 +68,6 @@ var div = d3.select('body').append("div");
         .center([107, 31])
         .scale(750)
           .translate([width/2, height/2]);
-
   var path = d3.geo.path()
           .projection(projection);
   var slow_speed = 4000;
@@ -82,11 +82,11 @@ var div = d3.select('body').append("div");
   var missing_names = null;
   var provinces_names = [];
   var last_id = 0; 
+  var intro_text_g = null;
   provinces_names[0] = "";
   var div = d3.select("body").append("div")   
   .attr("class", "tooltip")               
   .style("opacity", 0);
-
   var hist_control = svg.append("g")
   .attr("transform", function(d, i) { return "translate(" + 10 + "," + 120 + ")"; });
   hist_control.append("rect")
@@ -115,7 +115,6 @@ var div = d3.select('body').append("div");
             .attr("width", 55)
             .attr("height",20)
             .attr("fill", "#f0f0f0")
-
   year_hist_g.append("text")
     .attr("x", 5)
     .attr("y", 10)
@@ -137,17 +136,6 @@ var div = d3.select('body').append("div");
   var age_hist_show = false;
   var year_hist_show = false;
   var gender_hist_show = false;             
-/*
-  var hist_age_button = svg.append("rect")   
-    .attr("class", "age_hist_button")               
-    .attr("fill", "#f0f0f0")
-    .attr("x", 350)
-    .attr("y", 200)
-    .attr("height", 20)
-    .attr("width", 50)
-    .attr("opacity", 1)
-    .text("AGE");    
- */
   d3.select("div.tooltip").append("p")
   .text("Kidnapping Number")
   .style("font-size", "20px")
@@ -161,6 +149,7 @@ var div = d3.select('body').append("div");
   function count_number(leaves) {
       return leaves.length
   }
+
   function get_province_count(leaves){
       var counted_province = d3.nest()
        .key(function(d) {
@@ -175,6 +164,7 @@ var div = d3.select('body').append("div");
       }
       return values;
   }
+
   function get_age_count(data){
     counted_age = d3.nest()
        .key(function(d) {
@@ -209,6 +199,7 @@ var div = d3.select('body').append("div");
        .entries(data);
     return counted_year;
   }
+
   function get_gender_count(data){
     counted_gender = d3.nest()
        .key(function(d) {
@@ -218,9 +209,11 @@ var div = d3.select('body').append("div");
        .entries(data);
     return counted_gender;
   }
+
   function getRandomIntInclusive(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
+
   function pointInPolygon(point, vs) {
     // ray-casting algorithm based on
     // http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
@@ -239,9 +232,11 @@ var div = d3.select('body').append("div");
     }
     return inside;
   }
+
   function randPoint(bounds) {
     return [Math.floor(Math.random() * (bounds[1][0]-bounds[0][0])) + bounds[0][0], Math.floor(Math.random() * (bounds[1][1]-bounds[0][1])) + bounds[0][1]];
   }
+
   function find_position(datum){
     var map_geo = map_data.features[datum.province_id-1].geometry;
     var bounds = path.bounds(map_data.features[datum.province_id-1]);
@@ -277,6 +272,7 @@ var div = d3.select('body').append("div");
         return randPoint(bounds);
       }
   }
+
   function find_missing_list(province_id){
     result = ""
     for(var i =0 ; i<all_data.length;i++){
@@ -298,15 +294,99 @@ var div = d3.select('body').append("div");
   //following functions manipulate elements on the screen      
   function display_title(){
     svg.append("text")
-       .text("Kids Kidnapping In China")
+       .text("Many Youth Lost In China")
        .attr("x", 10)
        .attr("y", 30)
        .attr("font-family", "sans-serif")
-       .attr("font-size", "20px")
-       .attr("opacity", 0 ).transition().duration(1250)
+       .attr("font-size", "40px")
+       .attr("opacity", 0 ).transition().duration(2000)
+       .attr("opacity", 1 );
+    line_time_span = 2500;
+    time_delays = []
+    for(var i = 0; i<100; i ++){
+      time_delays.push((i+1)*line_time_span + 2500);
+    }
+    intro_text_g = svg.append("text")
+       .attr("x", 300)
+       .attr("y", 50)
+       .attr("font-family", "sans-serif")
+       .attr("font-size", "30px");
+
+       intro_text_g.append('svg:tspan')
+       .attr('x', 50)
+       .attr('dy',100)
+       .text("In China, massive number of childern are missing. According to various ")
+       .attr("opacity", 0 ).transition().delay(time_delays[0]). duration(1250)
+       .attr("opacity", 1 );
+
+       intro_text_g.append('svg:tspan')
+       .attr('x', 50)
+       .attr('dy', 35)
+       .text("sources, 10000 to 70000 childern are kidnapped in a single year. ")
+       .attr("opacity", 0 ).transition().delay(time_delays[1]). duration(1250)
+       .attr("opacity", 1 );
+       
+       intro_text_g.append('svg:tspan')
+       .attr('x', 50)
+       .attr('dy', 35)
+       .text("In US, this number is 100-200. Most childern kidnapped will never ")
+       .attr("opacity", 0 ).transition().delay(time_delays[2]). duration(1250)
        .attr("opacity", 1 )
-       .each("end", step_after_title);
+       intro_text_g.append('svg:tspan')
+       .attr('x', 50)
+       .attr('dy', 35)
+       .text("see their parents. Unlike in US, the main purpose of kidnapping ")
+       .attr("opacity", 0 ).transition().delay(time_delays[3]). duration(1250)
+       .attr("opacity", 1 )
+       intro_text_g.append('svg:tspan')
+       .attr('x', 50)
+       .attr('dy', 35)
+       .text("is not demanding ransom or sexual offences. The childern are for ")
+       .attr("opacity", 0 ).transition().delay(time_delays[4]). duration(1250)
+       .attr("opacity", 1 )
+       intro_text_g.append('svg:tspan')
+       .attr('x', 50)
+       .attr('dy', 35)
+       .text("sale. The crime of kidnapping childern is highly organized in China. ")
+       .attr("opacity", 0 ).transition().delay(time_delays[5]). duration(1250)
+       .attr("opacity", 1 )
+       intro_text_g.append('svg:tspan')       
+       .attr('x', 50)
+       .attr('dy', 35)
+       .text(" I have collect information from www.baibeihuijia.com, a website")
+       .attr("opacity", 0 ).transition().delay(time_delays[6]). duration(1250)
+       .attr("opacity", 1 )
+       intro_text_g.append('svg:tspan') 
+       .attr('x', 50)
+       .attr('dy', 35)
+       .text(" for heartbreaking parents looking for their missing childern.")
+       .attr("opacity", 0 ).transition().delay(time_delays[7]). duration(1250)
+       .attr("opacity", 1 )
+       intro_text_g.append('svg:tspan')
+       .attr('x', 50)
+       .attr('dy', 35)
+       .text("The following graphs and charts are about them, about this big ")
+       .attr("opacity", 0 ).transition().delay(time_delays[8]). duration(1250)
+       .attr("opacity", 1 )
+       intro_text_g.append('svg:tspan')
+       .attr('x', 50)
+       .attr('dy', 35)
+       .text("tragedy happening in China.")
+       .attr("opacity", 0 ).transition().delay(time_delays[9]). duration(1250)
+       .attr("opacity", 1 );
+
+      intro_text_g.attr("opacity", 1).transition().delay(time_delays[12]). duration(2000)
+                  .attr("opacity", 0)
+                  .each("end", step_after_title)
+                  .remove();
+       
+       
+ 
+
+
+      // .each("end", step_after_title);
   }
+
   function display_kidnapping_number(){
     svg.append("text")
        .attr("class", "kidnapping_number")
@@ -318,13 +398,14 @@ var div = d3.select('body').append("div");
        .attr("opacity", 1 )
     svg.append("text")
        .attr("class", "kidnapping_text")
-       .text("Kids Kidnapped")
+       .text("Kids Missing")
        .attr("x", 500)
        .attr("y", 120)
        .attr("font-size", "20px")
        .attr("opacity", 0 ).transition().delay(500).duration(500)
        .attr("opacity", 1 )
   }
+
  function display_date(date){
     svg.append("text")
        .attr("class", "month_date")
@@ -335,6 +416,7 @@ var div = d3.select('body').append("div");
        .attr("opacity", 0 ).transition().delay(500).duration(500)
        .attr("opacity", 1 )
  }
+
  function display_map(){
     provinces = svg.selectAll("path")
     .data( map_data.features )
@@ -353,15 +435,19 @@ var div = d3.select('body').append("div");
               });
 
  }
+
  function update_number(i){
    d3.select(".kidnapping_number").text(i + " Kids Kidnapped");
  }
+
  function delete_number(){
    d3.select(".kidnapping_number").remove();
  }
+
  function delete_date(){
    d3.select(".month_date").remove();
  }
+
  function draw_age_hist(){
   var max_value = d3.max(counted_age,function(d){
     return d.value;
@@ -412,6 +498,7 @@ var div = d3.select('body').append("div");
     .style("opacity",1)
     .text(function(d) {return d.value;});
  }
+
  function draw_year_hist(){
   var max_value = d3.max(counted_year,function(d){
     return d.values;
@@ -467,6 +554,7 @@ var div = d3.select('body').append("div");
     .style("opacity",1)
     .text(function(d) {return d.values;});
  }
+
 function draw_gender_hist(){
   var max_value = d3.max(counted_gender,function(d){
     return d.values;
@@ -519,6 +607,8 @@ function draw_gender_hist(){
     .style("opacity",1)
     .text(function(d) {return d.values;});
  }
+
+
  //this is the workhorse of slowly show red dots on the screen.
  function slowly_show_case(){
   for (var i = 0; i < slowly_data.length; i++) {
@@ -648,6 +738,7 @@ function draw_gender_hist(){
     });
  }
 
+
  //this is the workhorse of show many red dots on the screen.
  function batch_show_case(){
   for (var i = 0; i < sampled_data.length; i++) {
@@ -761,12 +852,6 @@ function draw_gender_hist(){
             });
   d3.select("div.tooltip").transition().duration(2000).ease("linear")
     .style("opacity", 1);
-  
-  /*
-  draw_age_hist();
-  d3.selectAll(".age_hist").attr("fill-opacity", 0);
-  draw_year_hist();
-  */
   hist_control.transition().duration(2000).ease("linear")
               .attr("fill-opacity", 1);
   year_hist_g.on("click", function(d,i){
@@ -861,8 +946,8 @@ gender_hist_g.on("click", function(d,i){
             
  }
 
- //following functions control how the animation is flowing.
 
+ //following functions control how the animation is flowing.
  function step_after_batch_draw(){
     show_color_map();
  }
@@ -883,6 +968,7 @@ gender_hist_g.on("click", function(d,i){
  function begin(){
     display_title();
  }
+
 
  //this function preprocess the data for further use
  function prepare_data(){   
@@ -930,6 +1016,7 @@ gender_hist_g.on("click", function(d,i){
     values.push(0);    
  }
 
+
  //this function execute when all the data loading is completed
  function data_ready(error, data){
     if (error) throw error;
@@ -937,6 +1024,10 @@ gender_hist_g.on("click", function(d,i){
     prepare_data();
     begin();
  }
+
+
+
+
 
  //The program begin from here, two datasets are loaded before above funtion called 
  d3.queue()
@@ -947,9 +1038,6 @@ gender_hist_g.on("click", function(d,i){
                                       data.province_id = +data.province_id;
                                       all_data.push(data);})
    .await(data_ready);
- 
-
-
 </script>
   
 </body>  
