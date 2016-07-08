@@ -14,7 +14,7 @@
   div.tooltip {   
   position: absolute;           
   text-align: left;           
-  width: 350px;                               
+  width: 400px;                               
   padding: 2px;             
   font-size: 10px;     
   background: #FFFFE0;
@@ -22,7 +22,7 @@
   border-radius: 8px;           
   pointer-events: none;
   left:900px;
-  top:70px;         
+  top:40px;         
   }  
   p.changing {         
   font-size: 20px;     
@@ -139,13 +139,18 @@ var div = d3.select('body').append("div");
   var year_hist_show = false;
   var gender_hist_show = false;             
   d3.select("div.tooltip").append("p")
-  .text("Kidnapping Number")
+  .text("Number of missing childern from provinces with darker color is higher than that of lighter ones. As we can see, some \
+         provinces have very high number of missing childern. Indeed, some provinces are more populated than others \
+         . But there is another important reason in China. Young parents from rural areas are flooding into big cities\
+          for work. Their childern are normally left at abandoned villages with elder ones. The scene create huge opportunities\
+           for human traffickers. The provinces with high number of missing childern also have high number of young people who \
+            are leaving hometown for work." )
   .style("font-size", "20px")
-  .style("color","#9ebcda");
+  .style("color","black");
   changing_text =  d3.select("div.tooltip").append("p")
   .attr("class", "changing")
-  .text("Click on a province");
-
+  .text("Click on a province to see a list of names of missing childern in that province. Each name is a heartbreaking story of a family. \
+         99.9% of them will never see their parents.");
   //following is some utility used in the main process
   //the name of the function indicate what the function can accomplish  
   function count_number(leaves) {
@@ -353,7 +358,7 @@ var div = d3.select('body').append("div");
        intro_text_g.append('svg:tspan')       
        .attr('x', 50)
        .attr('dy', 35)
-       .text(" I have collect information from www.baibeihuijia.com, a website")
+       .text(" I have collect information from www.baobeihuijia.com, a website")
        .attr("opacity", 0 ).transition().delay(time_delays[6]). duration(1250)
        .attr("opacity", 1 )
        intro_text_g.append('svg:tspan') 
