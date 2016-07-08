@@ -101,6 +101,23 @@ Uirá
 
 My response: Bar plot and text is added to explain the story.
 
+
+Iterations:
+
+Three iterations are following(the main index.html can be found in github repo):
+
+The initial version:
+
+http://bl.ocks.org/AdenGuo/raw/05881ceb67dde972a3ef2d1205d3149e/
+
+The version of first submit:
+
+http://bl.ocks.org/AdenGuo/raw/af9a4d5c33fafd47219b22d2f706bc1f/
+
+The version of second submit:
+
+http://bl.ocks.org/AdenGuo/raw/ed01b2d8bed119a88a5b9cd82453196a/
+
 # Resources
 
 
